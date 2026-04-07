@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEXUS // Karnavati University Registration System</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --neon-cyan: #00fff7;
+    --neon-pink: #ff007a;
+    --neon-green: #00ff88;
+    --neon-yellow: #ffe600;
+    --dark-bg: #020810;
+    --grid-color: rgba(0,255,247,0.04);
+    --panel-bg: rgba(0,20,40,0.85);
+    --border-glow: rgba(0,255,247,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark-bg);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanMove 8s linear infinite;
+  }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes scanMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100px; }
+  }
+
+  /* BOOT SCREEN */
+  #boot-screen {
+    position: fixed; top:0;left:0;right:0;bottom:0;
+    background: #000;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ff88;
+  }
+
+  #boot-text {
+    font-size: 13px;
+    line-height: 1.8;
+    width: 600px;
+    max-width: 90vw;
+    text-shadow: 0 0 8px #00ff88;
+  }
+
+  #boot-text .line {
+    opacity: 0;
+    animation: bootLine 0.1s forwards;
+  }
+
+  @keyframes bootLine { to { opacity: 1; } }
+
+  .boot-ok { color: #00ff88; }
+  .boot-warn { color: #ffe600; }
+  .boot-err { color: #ff007a; }
+  .boot-info { color: #00fff7; }
+
+  #boot-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: #00fff7;
+    text-shadow: 0 0 30px #00fff7, 0 0 60px #00fff7;
+    margin-bottom: 40px;
+    letter-spacing: 12px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { text-shadow: 0 0 30px #00fff7, 0 0 60px #00fff7; }
+    50% { text-shadow: 0 0 50px #00fff7, 0 0 100px #00fff7, 0 0 150px #00fff7; }
+  }
+
+  /* MAIN APP */
+  #app {
+    position: relative; z-index: 1;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+    min-height: 100vh;
+  }
+
+  #app.active { opacity: 1; }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 30px;
+    border-bottom: 1px solid var(--border-glow);
+    background: rgba(0,10,20,0.9);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .logo-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px var(--neon-cyan);
+  }
+
+  .logo-sub {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(0,255,247,0.5);
+    display: block;
+    margin-top: -2px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    font-size: 11px;
+    color: rgba(0,255,247,0.6);
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--neon-green);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: blink 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--neon-green);
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  #live-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: var(--neon-cyan);
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--neon-pink);
+    border: 1px solid var(--neon-pink);
+    padding: 4px 16px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px var(--neon-pink);
+    box-shadow: 0 0 15px rgba(255,0,122,0.2);
+    animation: glitch-border 4s ease infinite;
+  }
+
+  @keyframes glitch-border {
+    0%,95%,100% { box-shadow: 0 0 15px rgba(255,0,122,0.2); }
+    96% { box-shadow: 0 0 15px rgba(255,0,122,0.2), 3px 0 0 rgba(0,255,247,0.4), -3px 0 0 rgba(255,0,122,0.4); transform: translateX(2px); }
+    97% { transform: translateX(-2px); }
+    98% { transform: translateX(0); }
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(32px, 6vw, 72px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #00fff7 0%, #ff007a 50%, #ffe600 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+    position: relative;
+  }
+
+  .hero p {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    color: rgba(0,255,247,0.6);
+    margin-top: 16px;
+    letter-spacing: 2px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    background: rgba(0,255,247,0.05);
+    border: 1px solid rgba(0,255,247,0.2);
+    padding: 8px 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+  }
+
+  .stat-chip:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(0,255,247,0.1);
+    box-shadow: 0 0 20px rgba(0,255,247,0.2);
+  }
+
+  .stat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+  }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px 60px;
+  }
+
+  @media(max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* EVENT CARDS */
+  .events-panel h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: rgba(0,255,247,0.5);
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(0,255,247,0.1);
+    padding-bottom: 10px;
+  }
+
+  .events-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media(max-width: 600px) {
+    .events-grid { grid-template-columns: 1fr; }
+  }
+
+  .event-card {
+    position: relative;
+    background: var(--panel-bg);
+    border: 1px solid rgba(0,255,247,0.15);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+  }
+
+  .event-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-color), transparent);
+    opacity: 0.6;
+  }
+
+  .event-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, transparent 50%, var(--card-color) 50%);
+    opacity: 0.1;
+  }
+
+  .event-card:hover {
+    border-color: var(--card-color);
+    box-shadow: 0 0 30px rgba(var(--card-rgb), 0.2), inset 0 0 30px rgba(var(--card-rgb), 0.03);
+    transform: translateY(-2px);
+  }
+
+  .event-card.selected {
+    border-color: var(--card-color);
+    box-shadow: 0 0 40px rgba(var(--card-rgb), 0.3), inset 0 0 40px rgba(var(--card-rgb), 0.05);
+  }
+
+  .event-card.selected::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--card-color);
+    text-shadow: 0 0 8px var(--card-color);
+    margin-bottom: 4px;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: rgba(0,255,247,0.4);
+  }
+
+  .seats-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .seats-fill {
+    height: 100%;
+    background: var(--card-color);
+    border-radius: 2px;
+    box-shadow: 0 0 6px var(--card-color);
+    transition: width 1s ease;
+  }
+
+  .card-date {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+  }
+
+  /* SELECT INDICATOR */
+  .select-check {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 20px; height: 20px;
+    border: 1px solid var(--card-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: var(--card-color);
+    text-shadow: 0 0 6px var(--card-color);
+  }
+
+  .event-card.selected .select-check { opacity: 1; }
+
+  /* FORM PANEL */
+  .form-panel {
+    position: relative;
+  }
+
+  .panel-box {
+    background: var(--panel-bg);
+    border: 1px solid rgba(0,255,247,0.15);
+    padding: 28px;
+    position: sticky;
+    top: 80px;
+    backdrop-filter: blur(10px);
+  }
+
+  .panel-box::before {
+    content: 'REGISTRATION TERMINAL';
+    position: absolute;
+    top: -9px; left: 20px;
+    background: var(--dark-bg);
+    padding: 0 10px;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(0,255,247,0.5);
+    margin-bottom: 8px;
+  }
+
+  .form-input {
+    width: 100%;
+    background: rgba(0,255,247,0.03);
+    border: 1px solid rgba(0,255,247,0.2);
+    color: var(--neon-cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: all 0.3s;
+    -webkit-appearance: none;
+  }
+
+  .form-input::placeholder { color: rgba(0,255,247,0.2); }
+
+  .form-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0,255,247,0.15), inset 0 0 20px rgba(0,255,247,0.03);
+    background: rgba(0,255,247,0.06);
+  }
+
+  select.form-input option {
+    background: #020810;
+    color: #00fff7;
+  }
+
+  .form-input-wrap {
+    position: relative;
+  }
+
+  .input-corner {
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 10px; height: 10px;
+    border-right: 1px solid var(--neon-cyan);
+    border-bottom: 1px solid var(--neon-cyan);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .form-input:focus + .input-corner { opacity: 1; }
+
+  /* ADDITIONAL FIELDS */
+  .extra-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* SUBMIT BUTTON */
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .btn-submit::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(0,255,247,0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-submit:hover {
+    background: rgba(0,255,247,0.08);
+    box-shadow: 0 0 30px rgba(0,255,247,0.3);
+    text-shadow: 0 0 10px var(--neon-cyan);
+  }
+
+  .btn-submit:hover::before { width: 400px; height: 400px; }
+
+  .btn-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-submit:disabled:hover { box-shadow: none; background: transparent; }
+
+  /* SELECTED EVENT PREVIEW */
+  .selected-event-preview {
+    background: rgba(0,255,247,0.03);
+    border: 1px solid rgba(0,255,247,0.1);
+    padding: 12px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .selected-event-preview.show { display: block; }
+
+  .sep-label { font-size: 9px; letter-spacing: 3px; color: rgba(0,255,247,0.4); margin-bottom: 6px; }
+  .sep-name { color: #fff; font-size: 13px; font-family: 'Orbitron', monospace; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+  /* PROGRESS INDICATOR */
+  .form-progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .prog-step {
+    flex: 1;
+    height: 2px;
+    background: rgba(0,255,247,0.1);
+    transition: all 0.4s;
+  }
+
+  .prog-step.active {
+    background: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  /* SUCCESS OVERLAY */
+  #success-overlay {
+    display: none;
+    position: fixed;
+    top:0;left:0;right:0;bottom:0;
+    background: rgba(0,0,0,0.95);
+    z-index: 5000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  #success-overlay.show { display: flex; }
+
+  .success-content {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: successPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes successPop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .success-icon {
+    font-size: 60px;
+    display: block;
+    margin-bottom: 20px;
+    animation: spinIn 0.6s ease;
+  }
+
+  @keyframes spinIn {
+    from { transform: rotate(-180deg) scale(0); }
+    to { transform: rotate(0deg) scale(1); }
+  }
+
+  .success-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 5vw, 48px);
+    font-weight: 900;
+    color: var(--neon-green);
+    text-shadow: 0 0 40px var(--neon-green);
+    letter-spacing: 6px;
+    margin-bottom: 12px;
+  }
+
+  .success-msg {
+    font-size: 14px;
+    color: rgba(0,255,247,0.7);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .success-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--neon-yellow);
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+  }
+
+  .success-card {
+    border: 1px solid rgba(0,255,136,0.3);
+    background: rgba(0,255,136,0.05);
+    padding: 20px 32px;
+    margin: 20px auto;
+    max-width: 400px;
+    text-align: left;
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .sc-label { color: rgba(0,255,247,0.5); font-size: 10px; letter-spacing: 2px; }
+  .sc-val { color: #fff; }
+
+  .btn-close {
+    margin-top: 20px;
+    padding: 12px 40px;
+    background: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-close:hover {
+    background: rgba(0,255,136,0.1);
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  }
+
+  /* PARTICLES */
+  .particle {
+    position: fixed;
+    pointer-events: none;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    z-index: 4999;
+    animation: particleFly 1.5s ease-out forwards;
+  }
+
+  @keyframes particleFly {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
+  /* GLITCH TEXT */
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00fff7 0%, #ff007a 50%, #ffe600 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glitch::before {
+    animation: glitch1 4s infinite;
+    clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+  }
+
+  .glitch::after {
+    animation: glitch2 4s infinite;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+  }
+
+  @keyframes glitch1 {
+    0%,94%,100% { transform: none; opacity: 0; }
+    95% { transform: translateX(-3px); opacity: 0.8; }
+    96% { transform: translateX(3px); }
+    97% { transform: translateX(-1px); }
+  }
+
+  @keyframes glitch2 {
+    0%,91%,100% { transform: none; opacity: 0; }
+    92% { transform: translateX(3px); opacity: 0.8; }
+    93% { transform: translateX(-3px); }
+    94% { transform: translateX(1px); }
+  }
+
+  /* LOG CONSOLE */
+  .log-console {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(0,255,247,0.1);
+    padding: 12px 16px;
+    font-size: 10px;
+    line-height: 1.8;
+    max-height: 80px;
+    overflow-y: auto;
+    margin-top: 20px;
+    color: rgba(0,255,136,0.7);
+    scrollbar-width: none;
+  }
+
+  .log-console::before {
+    content: 'SYSTEM LOG';
+    display: block;
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(0,255,247,0.3);
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(0,255,247,0.05);
+    padding-bottom: 4px;
+  }
+
+  /* LOADING BAR */
+  .loading-bar-wrap {
+    height: 2px;
+    background: rgba(0,255,247,0.1);
+    margin-top: 16px;
+    display: none;
+  }
+
+  .loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+    box-shadow: 0 0 10px var(--neon-cyan);
+    animation: loadBar 1.5s ease forwards;
+  }
+
+  @keyframes loadBar { from{width:0} to{width:100%} }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(0,255,247,0.2);
+    border-top: 1px solid rgba(0,255,247,0.06);
+    position: relative; z-index: 1;
+  }
+
+  /* Cursor trail dot */
+  .cursor-dot {
+    position: fixed;
+    width: 6px; height: 6px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    box-shadow: 0 0 10px var(--neon-cyan);
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+  }
+
+  .required-note {
+    font-size: 9px;
+    color: rgba(0,255,247,0.3);
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid rgba(0,255,247,0.06);
+    margin: 20px 0;
+  }
+
+  .section-tag {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(255,0,122,0.6);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Cursor dot -->
+<div class="cursor-dot" id="cursor"></div>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+  <div id="boot-logo">NEXUS</div>
+  <div id="boot-text"></div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div id="success-overlay">
+  <canvas id="particle-canvas" style="position:fixed;top:0;left:0;pointer-events:none;z-index:4998;"></canvas>
+  <div class="success-content">
+    <span class="success-icon">⬡</span>
+    <div class="success-title">ACCESS GRANTED</div>
+    <div class="success-msg">REGISTRATION CONFIRMED — NODE SYNCHRONIZED</div>
+    <div class="success-id" id="reg-id">REG-ID: NEXUS-XXXXXX</div>
+    <div class="success-card" id="success-card"></div>
+    <button class="btn-close" onclick="closeSuccess()">// RETURN TO NEXUS</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="logo-text">NEXUS</div>
+      <span class="logo-sub">KARNAVATI UNIVERSITY REGISTRATION SYSTEM</span>
+    </div>
+    <div class="topbar-right">
+      <span><span class="status-dot"></span>SYSTEMS ONLINE</span>
+      <span id="live-time"></span>
+      <span>SESSION: <span style="color:var(--neon-yellow)" id="session-id"></span></span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">// KARNAVATI UNIVERSITY EVENT REGISTRATION SYSTEM //</div>
+    <h1><span class="glitch" data-text="SELECT YOUR MISSION">SELECT YOUR MISSION</span></h1>
+    <p>Choose an event below &nbsp;▸&nbsp; Fill terminal &nbsp;▸&nbsp; Synchronize node</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-chip">TOTAL EVENTS <span class="stat-val">04</span></div>
+    <div class="stat-chip">REGISTERED TODAY <span class="stat-val" id="reg-count">0</span></div>
+    <div class="stat-chip">SEATS REMAINING <span class="stat-val" id="seat-count">847</span></div>
+    <div class="stat-chip">STATUS <span class="stat-val" style="color:var(--neon-green)">LIVE</span></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- EVENTS -->
+    <div class="events-panel">
+      <h2>// EVENT DIRECTORY — SELECT TO REGISTER</h2>
+      <div class="events-grid" id="events-grid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-panel">
+      <div class="panel-box">
+
+        <!-- Progress -->
+        <div class="form-progress">
+          <div class="prog-step active" id="p1"></div>
+          <div class="prog-step" id="p2"></div>
+          <div class="prog-step" id="p3"></div>
+        </div>
+
+        <!-- Selected Event Preview -->
+        <div class="selected-event-preview" id="sep">
+          <div class="sep-label">// SELECTED MISSION</div>
+          <div class="sep-name" id="sep-name">—</div>
+        </div>
+
+        <form id="reg-form" onsubmit="handleSubmit(event)">
+
+          <div class="form-group">
+            <label class="form-label">// OPERATIVE FULL NAME *</label>
+            <div class="form-input-wrap">
+              <input class="form-input" type="text" id="full-name" placeholder="Enter your full name..." required autocomplete="off" oninput="updateProgress()"/>
+              <div class="input-corner"></div>
+            </div>
+          </div>
+
+          <div class="extra-fields">
+            <div class="form-group">
+              <label class="form-label">// STUDENT ID *</label>
+              <div class="form-input-wrap">
+                <input class="form-input" type="text" id="student-id" placeholder="e.g. GLS2024001" required autocomplete="off" oninput="updateProgress()"/>
+                <div class="input-corner"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">// SEMESTER *</label>
+              <div class="form-input-wrap">
+                <select class="form-input" id="semester" required onchange="updateProgress()">
+                  <option value="">Select...</option>
+                  <option>Sem 1</option><option>Sem 2</option><option>Sem 3</option>
+                  <option>Sem 4</option><option>Sem 5</option><option>Sem 6</option>
+                  <option>Sem 7</option><option>Sem 8</option>
+                </select>
+                <div class="input-corner"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">// CONTACT FREQUENCY (EMAIL) *</label>
+            <div class="form-input-wrap">
+              <input class="form-input" type="email" id="email" placeholder="your@email.com" required autocomplete="off" oninput="updateProgress()"/>
+              <div class="input-corner"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">// MISSION (EVENT) *</label>
+            <div class="form-input-wrap">
+              <select class="form-input" id="event-select" required onchange="syncEventSelect()">
+                <option value="">— Select Event —</option>
+              </select>
+              <div class="input-corner"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">// DEPLOYMENT DIVISION (DEPARTMENT)</label>
+            <div class="form-input-wrap">
+              <select class="form-input" id="dept">
+                <option value="">— Optional —</option>
+                <option>Computer Science</option>
+                <option>Electronics & Communication</option>
+              </select>
+              <div class="input-corner"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">// TACTICAL NOTES (OPTIONAL)</label>
+            <div class="form-input-wrap">
+              <textarea class="form-input" id="notes" rows="2" placeholder="Any dietary needs, accessibility requirements, questions..." style="resize:none;"></textarea>
+              <div class="input-corner"></div>
+            </div>
+          </div>
+
+          <p class="required-note">* Required fields. Data encrypted and stored securely.</p>
+
+          <div class="loading-bar-wrap" id="loading-bar">
+            <div class="loading-bar-fill"></div>
+          </div>
+
+          <button class="btn-submit" type="submit" id="submit-btn">INITIATE REGISTRATION ▶</button>
+
+        </form>
+
+        <!-- LOG CONSOLE -->
+        <div class="log-console" id="log-console">
+          <span id="log-lines"></span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    KARNAVATI UNIVERSITY REGISTRATION SYSTEM // ALL NODES SYNCHRONIZED // GCP-READY ARCHITECTURE
+  </footer>
+
+</div>
+
+<script>
+// ========================
+// EVENT DATA
+// ========================
+const EVENTS = [
+  {
+    id: 'TECHFEST-26',
+    label: 'TECH', icon: '⚡',
+    title: 'Tech Fest 2026',
+    desc: 'Hackathons, robotics battles, AI showcases & the ultimate coding championship.',
+    date: '2026-05-12', seats: 300, filled: 210,
+    color: '#00fff7', rgb: '0,255,247'
+  },
+  {
+    id: 'CULT-FIESTA',
+    label: 'CULTURE', icon: '🎭',
+    title: 'Cultural Fiesta',
+    desc: 'Dance battles, theatrical performances, music concerts & fashion showcase.',
+    date: '2026-05-18', seats: 500, filled: 320,
+    color: '#ff007a', rgb: '255,0,122'
+  },
+  {
+    id: 'ML-WORKSHOP',
+    label: 'WORKSHOP', icon: '🧠',
+    title: 'ML & AI Workshop',
+    desc: 'Deep dive into neural networks, LLMs & hands-on model training sessions.',
+    date: '2026-05-22', seats: 80, filled: 70,
+    color: '#ffe600', rgb: '255,230,0'
+  },
+  {
+    id: 'CLOUD-SUMMIT',
+    label: 'SUMMIT', icon: '☁️',
+    title: 'Cloud Computing Summit',
+    desc: 'GCP, AWS & Azure experts share real-world cloud architecture case studies.',
+    date: '2026-06-08', seats: 150, filled: 90,
+    color: '#9b59b6', rgb: '155,89,182'
+  }
+];
+
+let selectedEvent = null;
+let regCount = parseInt(localStorage.getItem('nexus_reg_count') || '0');
+
+// ========================
+// BOOT SEQUENCE
+// ========================
+const bootLines = [
+  { text: 'NEXUS OS v2.6.1 — KARNAVATI UNIVERSITY EVENT MANAGEMENT KERNEL', cls: 'boot-info', delay: 0 },
+  { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', cls: '', delay: 200 },
+  { text: '[OK]  Mounting event database...', cls: 'boot-ok', delay: 600 },
+  { text: '[OK]  Initializing UI renderer...', cls: 'boot-ok', delay: 1100 },
+  { text: '[OK]  Connecting to cloud endpoints...', cls: 'boot-ok', delay: 1600 },
+  { text: '[WARN] Local mode active — GCP sync disabled', cls: 'boot-warn', delay: 2100 },
+  { text: '[OK]  Loading 4 mission briefings...', cls: 'boot-ok', delay: 2600 },
+  { text: '[OK]  Registration terminal armed', cls: 'boot-ok', delay: 3000 },
+  { text: '[OK]  Session token generated', cls: 'boot-ok', delay: 3400 },
+  { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', cls: '', delay: 3700 },
+  { text: 'NEXUS SYSTEM READY. Welcome, Operative.', cls: 'boot-info', delay: 4000 },
+];
+
+function runBoot() {
+  const container = document.getElementById('boot-text');
+  bootLines.forEach(({ text, cls, delay }) => {
+    setTimeout(() => {
+      const line = document.createElement('div');
+      line.className = 'line ' + cls;
+      line.textContent = text;
+      container.appendChild(line);
+    }, delay);
+  });
+
+  setTimeout(() => {
+    document.getElementById('boot-screen').style.transition = 'opacity 0.8s';
+    document.getElementById('boot-screen').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('boot-screen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+    }, 800);
+  }, 5200);
+}
+
+// ========================
+// RENDER EVENTS
+// ========================
+function renderEvents() {
+  const grid = document.getElementById('events-grid');
+  const select = document.getElementById('event-select');
+  grid.innerHTML = '';
+
+  EVENTS.forEach(ev => {
+    const pct = Math.round((ev.filled / ev.seats) * 100);
+    const remaining = ev.seats - ev.filled;
+    const almostFull = remaining < 30;
+
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.style.setProperty('--card-color', ev.color);
+    card.style.setProperty('--card-rgb', ev.rgb);
+    card.dataset.id = ev.id;
+    card.innerHTML = `
+      <div class="select-check">✦</div>
+      <span class="card-icon">${ev.icon}</span>
+      <div class="card-label">${ev.label}</div>
+      <div class="card-title">${ev.title}</div>
+      <div class="card-desc">${ev.desc}</div>
+      <div class="card-meta">
+        <span>${almostFull ? '<span style="color:#ff007a;text-shadow:0 0 6px #ff007a">⚠ ONLY '+remaining+' LEFT</span>' : remaining+' seats left'}</span>
+        <span class="card-date">${ev.date}</span>
+      </div>
+      <div class="seats-bar"><div class="seats-fill" style="width:${pct}%;background:${ev.color};box-shadow:0 0 6px ${ev.color}"></div></div>
+    `;
+    card.addEventListener('click', () => selectEvent(ev.id));
+    grid.appendChild(card);
+
+    const opt = document.createElement('option');
+    opt.value = ev.id;
+    opt.textContent = `${ev.icon} ${ev.title} (${ev.date})`;
+    select.appendChild(opt);
+  });
+}
+
+function selectEvent(id) {
+  selectedEvent = EVENTS.find(e => e.id === id);
+  document.querySelectorAll('.event-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`[data-id="${id}"]`).classList.add('selected');
+
+  document.getElementById('event-select').value = id;
+  document.getElementById('sep').classList.add('show');
+  document.getElementById('sep-name').textContent = `${selectedEvent.icon} ${selectedEvent.title}`;
+  addLog(`Event selected: ${selectedEvent.title}`);
+  updateProgress();
+}
+
+function syncEventSelect() {
+  const val = document.getElementById('event-select').value;
+  if (val) selectEvent(val);
+}
+
+// ========================
+// PROGRESS
+// ========================
+function updateProgress() {
+  const name = document.getElementById('full-name').value.trim();
+  const sid = document.getElementById('student-id').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const ev = document.getElementById('event-select').value;
+
+  let steps = 0;
+  if (name && sid) steps = 1;
+  if (name && sid && email) steps = 2;
+  if (name && sid && email && ev) steps = 3;
+
+  ['p1','p2','p3'].forEach((id,i) => {
+    document.getElementById(id).classList.toggle('active', i < steps);
+  });
+}
+
+// ========================
+// LOG
+// ========================
+const logLines = [
+  'NEXUS terminal initialized',
+  'Event database loaded — 4 missions available',
+  `Session restored — ${regCount} registrations today`
+];
+
+function addLog(msg) {
+  logLines.push(`[${new Date().toLocaleTimeString()}] ` + msg);
+  const el = document.getElementById('log-lines');
+  el.innerHTML = logLines.map(l => l + '<br>').join('');
+  const cons = document.getElementById('log-console');
+  cons.scrollTop = cons.scrollHeight;
+}
+
+// ========================
+// ✅ FIXED SUBMIT — NOW CALLS FLASK API
+// ========================
+async function handleSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'SYNCHRONIZING NODE...';
+
+  const lb = document.getElementById('loading-bar');
+  lb.style.display = 'block';
+
+  addLog('Submitting registration to NEXUS server...');
+
+  const name     = document.getElementById('full-name').value.trim();
+  const studentId = document.getElementById('student-id').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const eventId  = document.getElementById('event-select').value;
+  const semester = document.getElementById('semester').value;
+  const dept     = document.getElementById('dept').value;
+  const notes    = document.getElementById('notes').value.trim();
+  const ev       = EVENTS.find(e => e.id === eventId);
+
+  try {
+    // ✅ REAL API CALL TO FLASK BACKEND
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name:  name,
+        student_id: studentId,
+        email:      email,
+        event_id:   eventId,
+        event_name: ev ? ev.title : eventId,
+        semester:   semester,
+        department: dept,
+        notes:      notes
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update local count
+      regCount++;
+      localStorage.setItem('nexus_reg_count', regCount);
+      document.getElementById('reg-count').textContent = regCount;
+
+      addLog(`NODE SYNCHRONIZED! ID: ${result.registration_id}`);
+
+      // Show success screen with data from server
+      showSuccess({
+        id:        result.registration_id,
+        name:      name,
+        studentId: studentId,
+        email:     email,
+        eventName: ev ? ev.title : eventId,
+        semester:  semester,
+        timestamp: result.timestamp
+      });
+
+    } else {
+      // Server returned an error
+      addLog(`ERROR: ${result.error}`);
+      alert('Registration failed: ' + result.error);
+    }
+
+  } catch (err) {
+    // Network error — Flask not running?
+    addLog('ERROR: Cannot reach NEXUS server. Is Flask running?');
+    alert('Could not connect to server!\nMake sure your Flask backend is running on port 5000.');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'INITIATE REGISTRATION ▶';
+    lb.style.display = 'none';
+  }
+}
+
+function showSuccess(data) {
+  document.getElementById('reg-id').textContent = `REG-ID: ${data.id}`;
+  document.getElementById('success-card').innerHTML = `
+    <div><span class="sc-label">OPERATIVE</span><br><span class="sc-val">${data.name}</span></div>
+    <div><span class="sc-label">STUDENT ID</span><br><span class="sc-val">${data.studentId}</span></div>
+    <div><span class="sc-label">MISSION</span><br><span class="sc-val">${data.eventName}</span></div>
+    <div><span class="sc-label">SEMESTER</span><br><span class="sc-val">${data.semester || '—'}</span></div>
+    <div><span class="sc-label">CONTACT</span><br><span class="sc-val">${data.email}</span></div>
+    <div><span class="sc-label">TIMESTAMP</span><br><span class="sc-val">${new Date(data.timestamp).toLocaleString()}</span></div>
+  `;
+  document.getElementById('success-overlay').classList.add('show');
+  launchParticles();
+  document.getElementById('reg-form').reset();
+  document.querySelectorAll('.event-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('sep').classList.remove('show');
+  selectedEvent = null;
+}
+
+function closeSuccess() {
+  document.getElementById('success-overlay').classList.remove('show');
+}
+
+// ========================
+// PARTICLES
+// ========================
+function launchParticles() {
+  const colors = ['#00fff7','#ff007a','#ffe600','#00ff88','#ff6600','#ffffff'];
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 200 + Math.random() * 300;
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[Math.floor(Math.random()*colors.length)]};box-shadow:0 0 6px currentColor;--dx:${Math.cos(angle)*dist}px;--dy:${Math.sin(angle)*dist}px;animation-duration:${0.8+Math.random()*0.8}s;animation-delay:${Math.random()*0.3}s;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2000);
+  }
+}
+
+// ========================
+// CLOCK & SESSION
+// ========================
+function updateClock() {
+  document.getElementById('live-time').textContent = new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+document.getElementById('session-id').textContent = Math.random().toString(36).substr(2,8).toUpperCase();
+
+// Animate seat count
+function animateSeatCount() {
+  const el = document.getElementById('seat-count');
+  let count = 847;
+  setInterval(() => {
+    count -= Math.floor(Math.random() * 2);
+    el.textContent = count;
+  }, 8000);
+}
+animateSeatCount();
+
+// ========================
+// CURSOR TRAIL
+// ========================
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+
+// ========================
+// INIT
+// ========================
+renderEvents();
+runBoot();
+</script>
+</body>
+</html>

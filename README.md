@@ -204,7 +204,7 @@ GET /api/health
 
 ## 🧑‍💻 Author
 
-**Rishabh**
+**Rishabh** **Granth**
 
 ---
 
